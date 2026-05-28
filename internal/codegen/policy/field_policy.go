@@ -38,6 +38,14 @@ var fieldPolicies = map[string][]fieldPolicy{
 	"DomainInterfaceTarget.dev": {
 		policyPreservePlannedValueOnReadbackOmit,
 	},
+	"DomainChannelTargetVirtIO.state": {
+		// libvirt reports the runtime connection state of the guest agent
+		// here ("connected"/"disconnected"), overriding any user-provided
+		// value on readback. Preserve the planned value so a race against
+		// the guest agent connecting does not cause "Provider produced
+		// inconsistent result after apply".
+		policyPreservePlannedValueOnReadbackOmit,
+	},
 }
 
 // ApplyFieldPolicies mutates the IR with Terraform-specific schema/conversion

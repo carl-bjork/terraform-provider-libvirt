@@ -71,6 +71,12 @@ func TestApplyFieldPoliciesMarksReadbackPreservationOverrides(t *testing.T) {
 				{TFName: "dev"},
 			},
 		},
+		{
+			Name: "DomainChannelTargetVirtIO",
+			Fields: []*generator.FieldIR{
+				{TFName: "state"},
+			},
+		},
 	}
 
 	ApplyFieldPolicies(structs)
@@ -83,6 +89,9 @@ func TestApplyFieldPoliciesMarksReadbackPreservationOverrides(t *testing.T) {
 	}
 	if !structs[2].Fields[0].PreservePlannedValueOnReadbackOmit {
 		t.Fatal("expected DomainInterfaceTarget.dev to preserve planned value on host-generated readback")
+	}
+	if !structs[3].Fields[0].PreservePlannedValueOnReadbackOmit {
+		t.Fatal("expected DomainChannelTargetVirtIO.state to preserve planned value against runtime status readback")
 	}
 }
 
