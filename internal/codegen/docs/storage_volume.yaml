@@ -1,6 +1,6 @@
 entries:
   - path: storage_volume.backing_store.format
-    description: Sets the on-disk format metadata for the backing store volume; this must match the actual format of the backing image.
+    description: Sets the disk image format. For a volume target this is the volume's own on-disk format; for a backing store it must match the actual format of the referenced backing image. Must be a format supported by the storage backend.
     reference: https://libvirt.org/formatstorage.html#backing-store-elements
   - path: storage_volume.allocation
     description: Reports the currently allocated space for the volume (in the unit specified by allocation_unit), which may be less than the volume capacity for sparse formats.
@@ -9,7 +9,7 @@ entries:
     description: Configures an optional backing store volume for copy-on-write images, enabling layered storage where this volume records changes on top of another image.
     reference: https://libvirt.org/formatstorage.html#backing-store-elements
   - path: storage_volume.backing_store.format.type
-    description: Specifies the backing store format type string (for example, "raw" or "qcow2"), which must be a format supported by the hypervisor.
+    description: The image format type string, for example "qcow2", "raw", or "vmdk". For a volume target this is the volume's own format; for a backing store it must match the backing image's actual format. Must be supported by the storage backend.
     reference: https://libvirt.org/formatstorage.html#backing-store-elements
   - path: storage_volume.allocation_unit
     description: Sets the unit for the allocation value (for example, "bytes", "KiB", "MiB", "GiB"); if omitted, libvirt uses its default unit semantics.
@@ -18,7 +18,7 @@ entries:
     description: Sets the path to the backing image used by this volume, either as an absolute host path or a pool-relative path (for example, "/var/lib/libvirt/images/base.qcow2").
     reference: https://libvirt.org/formatstorage.html#backing-store-elements
   - path: storage_volume.backing_store.permissions
-    description: Configures POSIX ownership and SELinux label metadata for the backing store volume, controlling how the backing file is labeled and accessed on the host.
+    description: Configures the POSIX ownership, mode bits, and optional security label that libvirt applies to the volume (or backing image) file or device on the host.
     reference: https://libvirt.org/formatstorage.html#backing-store-elements
   - path: storage_volume.capacity_unit
     description: Sets the unit used for `capacity` (for example `bytes`, `KiB`, `MiB`, `GiB`), matching libvirt’s `unit` attribute semantics.
@@ -30,7 +30,7 @@ entries:
     description: Sets the cipher mode of operation (for example `cbc` or `xts`), with the value user-provided and constrained by the encryption backend’s supported modes.
     reference: https://libvirt.org/formatstorage.html#storage-volume-target-elements
   - path: storage_volume.backing_store.permissions.label
-    description: Sets an SELinux security label for the backing store, when SELinux labeling is in use; the value is user-provided.
+    description: Optional security label (such as an SELinux label) applied to the file on the host; the value is user-provided.
     reference: https://libvirt.org/formatstorage.html#backing-store-elements
   - path: storage_volume.physical
     description: Reports the actual physical space currently used by the volume on the underlying storage, as computed by libvirt.
@@ -45,10 +45,10 @@ entries:
     description: Defines the encryption cipher parameters used for the volume, such as algorithm name, mode, and hash.
     reference: https://libvirt.org/formatstorage.html#storage-volume-target-elements
   - path: storage_volume.backing_store.permissions.mode
-    description: Sets the numeric file mode (permission bits) for the backing store, typically as an octal value such as `0640`.
+    description: File mode as an octal permission mask (for example `0640`).
     reference: https://libvirt.org/formatstorage.html#backing-store-elements
   - path: storage_volume.backing_store.permissions.owner
-    description: Sets the numeric user ID (uid) that owns the backing store file or device; the value is user-provided, for example `107`.
+    description: Numeric user ID (uid) that owns the file or device on the host (for example `107`).
     reference: https://libvirt.org/formatstorage.html#backing-store-elements
   - path: storage_volume.capacity
     description: Reports the logical capacity of the volume as seen by the guest, computed from the existing volume definition or image metadata.
@@ -66,7 +66,7 @@ entries:
     description: Sets the base cipher algorithm name (for example `aes`), with the value user-provided and expected to be a valid algorithm for the image’s encryption format.
     reference: https://libvirt.org/formatstorage.html#storage-volume-target-elements
   - path: storage_volume.backing_store.permissions.group
-    description: Sets the numeric group ID (gid) that owns the backing store file or device; the value is user-provided, for example `107`.
+    description: Numeric group ID (gid) that owns the file or device on the host (for example `107`).
     reference: https://libvirt.org/formatstorage.html#backing-store-elements
   - path: storage_volume.key
     description: Exposes the libvirt-assigned unique key identifying this volume within the pool, typically derived from the host path or backend identifier.
@@ -84,13 +84,13 @@ entries:
     description: Exposes the UUID of the libvirt secret object providing the encryption key; this is filled from the referenced secret and is read-only.
     reference: https://libvirt.org/formatstorage.html#storage-volume-target-elements
   - path: storage_volume.target.features
-    description: Configures per-volume feature flags for the target format (such as qcow2 features); contents are user-provided according to the image format.
+    description: 'Container for format-specific feature flags (such as qcow2 features) on the volume target. Note: libvirtxml does not model individual feature elements, so this object currently exposes no configurable sub-attributes.'
     reference: https://libvirt.org/formatstorage.html#storage-volume-target-elements
   - path: storage_volume.target.format.type
-    description: Sets the volume image format type (for example "raw", "qcow2", "vmdk"); value must be a format supported by the storage backend.
+    description: The image format type string, for example "qcow2", "raw", or "vmdk". For a volume target this is the volume's own format; for a backing store it must match the backing image's actual format. Must be supported by the storage backend.
     reference: https://libvirt.org/formatstorage.html#storage-volume-target-elements
   - path: storage_volume.target.permissions
-    description: Configures ownership and mode bits that libvirt applies to the volume file or device on the host.
+    description: Configures the POSIX ownership, mode bits, and optional security label that libvirt applies to the volume (or backing image) file or device on the host.
     reference: https://libvirt.org/formatstorage.html#storage-volume-target-elements
   - path: storage_volume.target.encryption.cipher.size
     description: Sets the cipher key size in bits for the encrypted storage volume (user-provided integer such as 128, 256, etc.).
@@ -99,16 +99,16 @@ entries:
     description: Sets how the secret is referenced, typically "uuid" to reference a libvirt secret by its UUID.
     reference: https://libvirt.org/formatstorage.html#storage-volume-target-elements
   - path: storage_volume.target.format
-    description: Configures the on-disk image format of the volume target.
+    description: Sets the disk image format. For a volume target this is the volume's own on-disk format; for a backing store it must match the actual format of the referenced backing image. Must be a format supported by the storage backend.
     reference: https://libvirt.org/formatstorage.html#storage-volume-target-elements
   - path: storage_volume.target.permissions.group
-    description: Sets the numeric group ID (gid) to own the volume file or device on the host.
+    description: Numeric group ID (gid) that owns the file or device on the host (for example `107`).
     reference: https://libvirt.org/formatstorage.html#storage-volume-target-elements
   - path: storage_volume.target.permissions.label
-    description: Sets an optional security label (such as an SELinux label) to apply to the volume on the host; value is user-provided.
+    description: Optional security label (such as an SELinux label) applied to the file on the host; the value is user-provided.
     reference: https://libvirt.org/formatstorage.html#storage-volume-target-elements
   - path: storage_volume.target.permissions.mode
-    description: Sets the file mode for the volume as an octal permission mask (for example "0600" or "0640").
+    description: File mode as an octal permission mask (for example `0640`).
     reference: https://libvirt.org/formatstorage.html#storage-volume-target-elements
   - path: storage_volume.target.encryption.format
     description: Sets the encryption format used for the volume; for LUKS volumes this is typically set to "luks".
@@ -123,7 +123,7 @@ entries:
     description: Sets the absolute path of the volume on the host filesystem or block device node.
     reference: https://libvirt.org/formatstorage.html#storage-volume-target-elements
   - path: storage_volume.target.permissions.owner
-    description: Sets the numeric user ID (uid) to own the volume file or device on the host.
+    description: Numeric user ID (uid) that owns the file or device on the host (for example `107`).
     reference: https://libvirt.org/formatstorage.html#storage-volume-target-elements
   - path: storage_volume.target.timestamps
     description: Configures stored timestamps for the volume target, such as access and change times.
