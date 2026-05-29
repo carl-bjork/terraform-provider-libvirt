@@ -3,12 +3,12 @@
 page_title: "libvirt_volume Resource - terraform-provider-libvirt"
 subcategory: ""
 description: |-
-  Storage volume within a storage pool
+  Manages a storage volume inside a libvirt storage pool. A volume is created with virStorageVolCreateXML against its pool; the optional create.content block uploads data into the new volume (from a URL or local file) via the libvirt volume upload stream. libvirt allocates the volume in the pool's backing store and reports the resulting key, path, and actual allocation. The schema mirrors the libvirt storage volume XML schema.
 ---
 
 # libvirt_volume (Resource)
 
-Storage volume within a storage pool
+Manages a storage volume inside a libvirt storage pool. A volume is created with virStorageVolCreateXML against its pool; the optional `create.content` block uploads data into the new volume (from a URL or local file) via the libvirt volume upload stream. libvirt allocates the volume in the pool's backing store and reports the resulting `key`, `path`, and actual `allocation`. The schema mirrors the libvirt storage volume XML schema.
 
 ## Example Usage
 
@@ -93,46 +93,66 @@ resource "libvirt_volume" "from_local" {
 
 ### Required
 
-- `name` (String) Sets the name for the storage volume, which must be unique within the pool.
+- `name` (String) Sets the volume name, which must be unique within the containing pool (for disk pools, often derived from a device path plus partition index).
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-general-metadata>
 - `pool` (String) Name of the storage pool where the volume will be created
 
 ### Optional
 
-- `allocation_unit` (String) Specifies the units for the allocated space in the storage volume.
-- `backing_store` (Attributes) Backing store configuration for copy-on-write volumes (see [below for nested schema](#nestedatt--backing_store))
+- `allocation_unit` (String) Sets the unit for the allocation value (for example, "bytes", "KiB", "MiB", "GiB"); if omitted, libvirt uses its default unit semantics.
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-general-metadata>
+- `backing_store` (Attributes) Configures an optional backing store volume for copy-on-write images, enabling layered storage where this volume records changes on top of another image. (see [below for nested schema](#nestedatt--backing_store))
 - `capacity` (Number) Volume capacity in bytes (required unless using create.content)
-- `capacity_unit` (String) Specifies the units for the total capacity in the storage volume.
+- `capacity_unit` (String) Sets the unit used for `capacity` (for example `bytes`, `KiB`, `MiB`, `GiB`), matching libvirt’s `unit` attribute semantics.
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-general-metadata>
 - `create` (Attributes) Volume creation options for initializing volume content from external sources (see [below for nested schema](#nestedatt--create))
-- `physical_unit` (String) Specifies the units for the physical size in the storage volume.
+- `physical_unit` (String) Sets the unit used for `physical` (for example `bytes`, `KiB`, `MiB`, `GiB`), matching libvirt’s `unit` attribute semantics.
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-general-metadata>
 - `target` (Attributes) (see [below for nested schema](#nestedatt--target))
-- `type` (String) Specifies the type of the storage volume, allowing for distinction of different volume types.
+- `type` (String) Sets the actual storage volume type reported by libvirt (for example `file`, `block`, `dir`, `network`, `netdir`, or `ploop`), matching the `type` attribute libvirt exposes for the volume; the value is user-provided and should be consistent with the underlying storage backend.
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-xml>
 
 ### Read-Only
 
-- `allocation` (Number) Configures the total amount of space allocated for the storage volume.
+- `allocation` (Number) Reports the currently allocated space for the volume (in the unit specified by allocation_unit), which may be less than the volume capacity for sparse formats.
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-general-metadata>
 - `id` (String) Volume identifier (same as key)
-- `key` (String) Defines a unique key identifier for the storage volume.
+- `key` (String) Exposes the libvirt-assigned unique key identifying this volume within the pool, typically derived from the host path or backend identifier.
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-general-metadata>
 - `path` (String) Volume path on the host filesystem (same as target.path)
-- `physical` (Number) Configures the physical size of the storage volume.
+- `physical` (Number) Reports the actual physical space currently used by the volume on the underlying storage, as computed by libvirt.
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-general-metadata>
 
 <a id="nestedatt--backing_store"></a>
 ### Nested Schema for `backing_store`
 
 Required:
 
-- `path` (String) Defines the path to the backing store for the storage volume.
+- `path` (String) Sets the path to the backing image used by this volume, either as an absolute host path or a pool-relative path (for example, "/var/lib/libvirt/images/base.qcow2").
+
+See: <https://libvirt.org/formatstorage.html#backing-store-elements>
 
 Optional:
 
-- `format` (Attributes) Sets the format type for the backing store of the storage volume. (see [below for nested schema](#nestedatt--backing_store--format))
-- `permissions` (Attributes) Configures the permissions for the backing store of the storage volume. (see [below for nested schema](#nestedatt--backing_store--permissions))
+- `format` (Attributes) Sets the disk image format. For a volume target this is the volume's own on-disk format; for a backing store it must match the actual format of the referenced backing image. Must be a format supported by the storage backend. (see [below for nested schema](#nestedatt--backing_store--format))
+- `permissions` (Attributes) Configures the POSIX ownership, mode bits, and optional security label that libvirt applies to the volume (or backing image) file or device on the host. (see [below for nested schema](#nestedatt--backing_store--permissions))
 
 <a id="nestedatt--backing_store--format"></a>
 ### Nested Schema for `backing_store.format`
 
 Required:
 
-- `type` (String) Specifies the type of the backing store format used for the storage volume.
+- `type` (String) The image format type string, for example "qcow2", "raw", or "vmdk". For a volume target this is the volume's own format; for a backing store it must match the backing image's actual format. Must be supported by the storage backend.
+
+See: <https://libvirt.org/formatstorage.html#backing-store-elements>
 
 
 <a id="nestedatt--backing_store--permissions"></a>
@@ -140,10 +160,18 @@ Required:
 
 Optional:
 
-- `group` (String) Sets the group ownership for the backing store permissions of the volume.
-- `label` (String) Configures the label associated with the backing store permissions.
-- `mode` (String) Specifies the mode (file permissions) for the backing store of the volume.
-- `owner` (String) Defines the owner of the backing store permissions for the volume.
+- `group` (String) Numeric group ID (gid) that owns the file or device on the host (for example `107`).
+
+See: <https://libvirt.org/formatstorage.html#backing-store-elements>
+- `label` (String) Optional security label (such as an SELinux label) applied to the file on the host; the value is user-provided.
+
+See: <https://libvirt.org/formatstorage.html#backing-store-elements>
+- `mode` (String) File mode as an octal permission mask (for example `0640`).
+
+See: <https://libvirt.org/formatstorage.html#backing-store-elements>
+- `owner` (String) Numeric user ID (uid) that owns the file or device on the host (for example `107`).
+
+See: <https://libvirt.org/formatstorage.html#backing-store-elements>
 
 
 
@@ -168,14 +196,22 @@ Required:
 
 Optional:
 
-- `cluster_size` (Number) Configures the cluster size of the storage volume.
-- `cluster_size_unit` (String) Specifies the units for the cluster size of the storage volume.
-- `compat` (String) Sets compatibility settings for the storage volume target.
-- `encryption` (Attributes) Configures the encryption settings for the storage volume. (see [below for nested schema](#nestedatt--target--encryption))
-- `features` (Attributes List) Enables specific features for the storage volume target. (see [below for nested schema](#nestedatt--target--features))
-- `format` (Attributes) Sets the format type for the backing store of the storage volume. (see [below for nested schema](#nestedatt--target--format))
-- `permissions` (Attributes) Configures the permissions for the backing store of the storage volume. (see [below for nested schema](#nestedatt--target--permissions))
-- `timestamps` (Attributes) Records the timestamp information for the storage volume target. (see [below for nested schema](#nestedatt--target--timestamps))
+- `cluster_size` (Number) Sets the cluster size for qcow2 volumes, controlling the allocation granularity on disk; value is a size with the unit given by `cluster_size_unit`.
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-target-elements>
+- `cluster_size_unit` (String) Sets the unit for `cluster_size` (for example `bytes`, `KiB`, `MiB`), matching libvirt’s clusterSize `unit` attribute semantics.
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-target-elements>
+- `compat` (String) Sets the qcow2 compatibility level for the volume (for example `0.10` or `1.1`), controlling which qemu feature set the image uses.
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-target-elements>
+- `encryption` (Attributes) Enables and configures encryption for the volume’s data, defining the cipher parameters for an encrypted image. (see [below for nested schema](#nestedatt--target--encryption))
+- `features` (Attributes List) Container for format-specific feature flags (such as qcow2 features) on the volume target. Note: libvirtxml does not model individual feature elements, so this object currently exposes no configurable sub-attributes.
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-target-elements> (see [below for nested schema](#nestedatt--target--features))
+- `format` (Attributes) Sets the disk image format. For a volume target this is the volume's own on-disk format; for a backing store it must match the actual format of the referenced backing image. Must be a format supported by the storage backend. (see [below for nested schema](#nestedatt--target--format))
+- `permissions` (Attributes) Configures the POSIX ownership, mode bits, and optional security label that libvirt applies to the volume (or backing image) file or device on the host. (see [below for nested schema](#nestedatt--target--permissions))
+- `timestamps` (Attributes) Configures stored timestamps for the volume target, such as access and change times. (see [below for nested schema](#nestedatt--target--timestamps))
 
 Read-Only:
 
@@ -186,23 +222,33 @@ Read-Only:
 
 Required:
 
-- `format` (String) Defines the format of the encryption for the storage volume.
+- `format` (String) Sets the encryption format used for the volume; for LUKS volumes this is typically set to "luks".
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-target-elements>
 
 Optional:
 
-- `cipher` (Attributes) Sets the encryption cipher for the storage volume to be applied. (see [below for nested schema](#nestedatt--target--encryption--cipher))
-- `ivgen` (Attributes) Controls the initialization vector generation settings for the encryption. (see [below for nested schema](#nestedatt--target--encryption--ivgen))
-- `secret` (Attributes) Provides the configuration for the secret used in the encryption process. (see [below for nested schema](#nestedatt--target--encryption--secret))
+- `cipher` (Attributes) Defines the encryption cipher parameters used for the volume, such as algorithm name, mode, and hash. (see [below for nested schema](#nestedatt--target--encryption--cipher))
+- `ivgen` (Attributes) Configures the initialization vector (IV) generation method for the encrypted volume; when present, both name and hash must be specified. (see [below for nested schema](#nestedatt--target--encryption--ivgen))
+- `secret` (Attributes) Configures the libvirt secret used to supply the encryption key material for the volume. (see [below for nested schema](#nestedatt--target--encryption--secret))
 
 <a id="nestedatt--target--encryption--cipher"></a>
 ### Nested Schema for `target.encryption.cipher`
 
 Required:
 
-- `hash` (String) Specifies the hash algorithm used with the encryption cipher.
-- `mode` (String) Defines the mode for the encryption cipher of the storage volume.
-- `name` (String) Sets the name of the encryption cipher for the storage volume.
-- `size` (Number) Sets the size of the encryption cipher for the storage volume.
+- `hash` (String) Sets the hash algorithm used with the encryption cipher (for example `sha256`), with the exact value being user-provided but expected to be supported by the chosen encryption format.
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-target-elements>
+- `mode` (String) Sets the cipher mode of operation (for example `cbc` or `xts`), with the value user-provided and constrained by the encryption backend’s supported modes.
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-target-elements>
+- `name` (String) Sets the base cipher algorithm name (for example `aes`), with the value user-provided and expected to be a valid algorithm for the image’s encryption format.
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-target-elements>
+- `size` (Number) Sets the cipher key size in bits for the encrypted storage volume (user-provided integer such as 128, 256, etc.).
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-target-elements>
 
 
 <a id="nestedatt--target--encryption--ivgen"></a>
@@ -210,8 +256,12 @@ Required:
 
 Required:
 
-- `hash` (String) Specifies the hashing algorithm used for the initialization vector generation.
-- `name` (String) Sets the name of the initialization vector generator for the encryption.
+- `hash` (String) Sets the hash algorithm used by the IV generator (for example "sha1" or "sha256"); value is user-provided.
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-target-elements>
+- `name` (String) Sets the IV generation scheme name used by the encryption layer (for example "plain", "essiv", etc.); value is user-provided.
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-target-elements>
 
 
 <a id="nestedatt--target--encryption--secret"></a>
@@ -219,11 +269,12 @@ Required:
 
 Required:
 
-- `type` (String) Defines the type of the secret used for encryption purposes.
+- `type` (String) Sets how the secret is referenced, typically "uuid" to reference a libvirt secret by its UUID.
 
-Read-Only:
+See: <https://libvirt.org/formatstorage.html#storage-volume-target-elements>
+- `uuid` (String) Exposes the UUID of the libvirt secret object providing the encryption key; this is filled from the referenced secret and is read-only.
 
-- `uuid` (String) Sets the universally unique identifier (UUID) for the encryption secret.
+See: <https://libvirt.org/formatstorage.html#storage-volume-target-elements>
 
 
 
@@ -236,7 +287,9 @@ Read-Only:
 
 Required:
 
-- `type` (String) Specifies the type of the backing store format used for the storage volume.
+- `type` (String) The image format type string, for example "qcow2", "raw", or "vmdk". For a volume target this is the volume's own format; for a backing store it must match the backing image's actual format. Must be supported by the storage backend.
+
+See: <https://libvirt.org/formatstorage.html#backing-store-elements>
 
 
 <a id="nestedatt--target--permissions"></a>
@@ -244,10 +297,18 @@ Required:
 
 Optional:
 
-- `group` (String) Sets the group ownership for the backing store permissions of the volume.
-- `label` (String) Configures the label associated with the backing store permissions.
-- `mode` (String) Specifies the mode (file permissions) for the backing store of the volume.
-- `owner` (String) Defines the owner of the backing store permissions for the volume.
+- `group` (String) Numeric group ID (gid) that owns the file or device on the host (for example `107`).
+
+See: <https://libvirt.org/formatstorage.html#backing-store-elements>
+- `label` (String) Optional security label (such as an SELinux label) applied to the file on the host; the value is user-provided.
+
+See: <https://libvirt.org/formatstorage.html#backing-store-elements>
+- `mode` (String) File mode as an octal permission mask (for example `0640`).
+
+See: <https://libvirt.org/formatstorage.html#backing-store-elements>
+- `owner` (String) Numeric user ID (uid) that owns the file or device on the host (for example `107`).
+
+See: <https://libvirt.org/formatstorage.html#backing-store-elements>
 
 
 <a id="nestedatt--target--timestamps"></a>
@@ -255,6 +316,12 @@ Optional:
 
 Required:
 
-- `atime` (String) Sets the last access time timestamp for the storage volume target.
-- `ctime` (String) Specifies the last status change time for the storage volume target.
-- `mtime` (String) Sets the last modification time for the storage volume target.
+- `atime` (String) Sets the last access time of the volume, typically as a UNIX timestamp in seconds (and optional nanoseconds) since the epoch.
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-target-elements>
+- `ctime` (String) Sets the last metadata change time of the volume, typically as a UNIX timestamp in seconds (and optional nanoseconds) since the epoch.
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-target-elements>
+- `mtime` (String) Sets the last modification time (mtime) metadata for the volume target, using a user-provided timestamp value (seconds plus optional nanoseconds) that must be present for the volume definition. Examples: `seconds = 1716900000`, `seconds = 1716900000`, `nanoseconds = 123456789`.
+
+See: <https://libvirt.org/formatstorage.html#storage-volume-target-elements>
