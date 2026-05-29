@@ -83,7 +83,7 @@ func (r *VolumeResource) Schema(ctx context.Context, req resource.SchemaRequest,
 	targetAttrs["permissions"] = permissionsAttr
 
 	// Use generated schema with provider-specific overrides
-	resp.Schema = generated.StorageVolumeSchema(map[string]schema.Attribute{
+	volumeSchema := generated.StorageVolumeSchema(map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Description: "Volume identifier (same as key)",
 			Computed:    true,
@@ -134,6 +134,15 @@ func (r *VolumeResource) Schema(ctx context.Context, req resource.SchemaRequest,
 			},
 		},
 	})
+
+	volumeSchema.Description = "Manages a storage volume inside a libvirt storage pool. A volume is created " +
+		"with virStorageVolCreateXML against its pool; the optional `create.content` block uploads data into " +
+		"the new volume (from a URL or local file) via the libvirt volume upload stream. libvirt allocates " +
+		"the volume in the pool's backing store and reports the resulting `key`, `path`, and actual " +
+		"`allocation`. The schema mirrors the libvirt storage volume XML schema."
+	volumeSchema.MarkdownDescription = volumeSchema.Description
+
+	resp.Schema = volumeSchema
 }
 
 // Configure configures the resource

@@ -620,6 +620,18 @@ Manages a libvirt domain (virtual machine).
 
 This resource follows the [libvirt domain XML schema](https://libvirt.org/formatdomain.html) closely,
 providing fine-grained control over VM configuration.
+
+### Backend behavior
+
+The provider renders your configuration into a ` + "`<domain>`" + ` XML document and defines a **persistent**
+domain (virDomainDefineXML). When ` + "`running`" + ` is true the domain is then started (virDomainCreate).
+Updates redefine the domain in place; some changes require the domain to be stopped first (controlled by the
+` + "`update`" + ` block) and a few immutable attributes force resource replacement.
+
+On read, the provider parses the live XML back from libvirt. libvirt normalizes many values — for example a
+machine type of ` + "`q35`" + ` is expanded to a versioned alias such as ` + "`pc-q35-10.1`" + `, and it
+auto-assigns device addresses, aliases, and PCI topology. To avoid spurious diffs the provider preserves your
+configured value for optional fields you set and only reads back values you did not specify.
 `
 	resp.Schema = schemaDef
 }
