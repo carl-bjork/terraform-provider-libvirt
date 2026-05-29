@@ -34,6 +34,29 @@ jobs:
         with:
           version: v2.10.1
           only-new-issues: true
+  docs:
+    name: Docs up to date
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: ["1.26.x"]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Generate code
+        run: make generate
+      - name: Generate docs
+        run: make docs
+      - name: Check docs are up to date
+        run: |
+          if [ -n "$(git status --porcelain docs/)" ]; then
+            echo "::error::Generated docs are out of date. Run 'make docs' and commit the changes."
+            git status --porcelain docs/
+            git diff --stat -- docs/
+            exit 1
+          fi
   build:
     name: Build
     runs-on: ${{ matrix.os }}
