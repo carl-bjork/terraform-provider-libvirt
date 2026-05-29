@@ -3,10 +3,10 @@ entries:
     description: Configures QoS limits for outgoing traffic from the network, with child attributes controlling average rate and related parameters.
     reference: https://libvirt.org/formatnetwork.html#quality-of-service
   - path: network.bandwidth.outbound.burst
-    description: Sets the maximum instantaneous outbound bandwidth burst size in kilobytes per second that may temporarily exceed the average; value is a user-provided non-negative integer.
+    description: Sets the maximum burst size, in kilobytes, that may temporarily exceed the average rate for traffic in this direction; value is a user-provided non-negative integer.
     reference: https://libvirt.org/formatnetwork.html#quality-of-service
   - path: network.bandwidth.inbound.peak
-    description: Sets an upper cap on inbound bandwidth in kilobytes per second, typically higher than average but not exceeding burst; value is a user-provided non-negative integer.
+    description: Sets an upper cap on the rate for traffic in this direction, in kilobytes per second (typically higher than average but not exceeding burst); value is a user-provided non-negative integer.
     reference: https://libvirt.org/formatnetwork.html#quality-of-service
   - path: network.bridge
     description: Configures the characteristics of the bridge device that backs this virtual network, including name and STP/forwarding behavior.
@@ -24,19 +24,19 @@ entries:
     description: Configures overall QoS bandwidth limits for the virtual network, enabling nested inbound/outbound rate settings when present.
     reference: https://libvirt.org/formatnetwork.html#quality-of-service
   - path: network.bandwidth.inbound.average
-    description: Sets the long-term average inbound bandwidth limit in kilobytes per second; value is a user-provided non-negative integer (e.g. 10240 for ~10 MB/s).
+    description: Sets the long-term average bandwidth limit for traffic in this direction, in kilobytes per second; value is a user-provided non-negative integer (e.g. 10240 for ~10 MB/s).
     reference: https://libvirt.org/formatnetwork.html#quality-of-service
   - path: network.bandwidth.inbound.burst
-    description: Sets the maximum instantaneous inbound bandwidth burst size in kilobytes per second that may temporarily exceed the average; value is a user-provided non-negative integer.
+    description: Sets the maximum burst size, in kilobytes, that may temporarily exceed the average rate for traffic in this direction; value is a user-provided non-negative integer.
     reference: https://libvirt.org/formatnetwork.html#quality-of-service
   - path: network.bandwidth.inbound.floor
-    description: Sets a minimum guaranteed inbound bandwidth in kilobytes per second when supported by the backend; value is a user-provided non-negative integer.
+    description: Sets a minimum guaranteed bandwidth for traffic in this direction, in kilobytes per second, when supported by the backend; value is a user-provided non-negative integer.
     reference: https://libvirt.org/formatnetwork.html#quality-of-service
   - path: network.bandwidth.outbound.average
-    description: Sets the long-term average outbound bandwidth limit in kilobytes per second; value is a user-provided non-negative integer.
+    description: Sets the long-term average bandwidth limit for traffic in this direction, in kilobytes per second; value is a user-provided non-negative integer (e.g. 10240 for ~10 MB/s).
     reference: https://libvirt.org/formatnetwork.html#quality-of-service
   - path: network.bandwidth.outbound.peak
-    description: Sets an upper cap on outbound bandwidth in kilobytes per second, typically higher than average but not exceeding burst; value is a user-provided non-negative integer.
+    description: Sets an upper cap on the rate for traffic in this direction, in kilobytes per second (typically higher than average but not exceeding burst); value is a user-provided non-negative integer.
     reference: https://libvirt.org/formatnetwork.html#quality-of-service
   - path: network.bandwidth.class_id
     description: Sets an optional traffic classification identifier (classID) for the network's bandwidth rules; value is user-provided and format is not constrained by libvirt.
@@ -45,7 +45,7 @@ entries:
     description: Configures QoS limits for incoming traffic to the network, with child attributes controlling average rate and related parameters.
     reference: https://libvirt.org/formatnetwork.html#quality-of-service
   - path: network.bandwidth.outbound.floor
-    description: Sets a minimum guaranteed outbound bandwidth in kilobytes per second when supported by the backend; value is a user-provided non-negative integer.
+    description: Sets a minimum guaranteed bandwidth for traffic in this direction, in kilobytes per second, when supported by the backend; value is a user-provided non-negative integer.
     reference: https://libvirt.org/formatnetwork.html#quality-of-service
   - path: network.bridge.mac_table_manager
     description: Selects the MAC address table manager implementation for the bridge (e.g. "kernel" or "libvirt" when supported); value is a user-provided string constrained to backend-supported options.
