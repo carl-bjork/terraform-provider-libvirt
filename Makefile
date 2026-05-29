@@ -112,7 +112,7 @@ check: lint vet test ## Run all checks (lint, vet, test)
 
 docs: ## Generate provider documentation
 	@echo "Installing tfplugindocs..."
-	@go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest
+	@go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@v0.24.0
 	@echo "Generating documentation..."
 	@PATH="$(PATH):$(shell go env GOPATH)/bin" tfplugindocs generate
 
