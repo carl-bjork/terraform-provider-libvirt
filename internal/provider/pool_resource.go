@@ -91,7 +91,7 @@ func (r *PoolResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	targetAttrs["path"] = pathAttr
 
 	// Use generated schema with resource-specific overrides
-	resp.Schema = generated.StoragePoolSchema(map[string]schema.Attribute{
+	poolSchema := generated.StoragePoolSchema(map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Description: "Pool UUID (same as uuid)",
 			Computed:    true,
@@ -132,6 +132,15 @@ func (r *PoolResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			},
 		},
 	})
+
+	poolSchema.Description = "Manages a libvirt storage pool, the container in which volumes live. " +
+		"The pool is defined from the rendered `<pool>` XML (virStoragePoolDefineXML); depending on the " +
+		"`create` options the provider then builds it (formats/creates the backing store), starts it, and " +
+		"sets autostart. libvirt does not provision the underlying storage (volume group, NFS export, iSCSI " +
+		"target, etc.) — that must already exist on the host. The schema mirrors the libvirt storage pool XML schema."
+	poolSchema.MarkdownDescription = poolSchema.Description
+
+	resp.Schema = poolSchema
 }
 
 // Configure configures the resource

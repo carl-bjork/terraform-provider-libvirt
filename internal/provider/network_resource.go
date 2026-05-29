@@ -53,7 +53,7 @@ func (r *NetworkResource) Schema(ctx context.Context, req resource.SchemaRequest
 	}
 
 	// Use generated schema with resource-specific overrides
-	resp.Schema = generated.NetworkSchema(map[string]schema.Attribute{
+	networkSchema := generated.NetworkSchema(map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Description: "Network identifier (UUID)",
 			Computed:    true,
@@ -71,6 +71,14 @@ func (r *NetworkResource) Schema(ctx context.Context, req resource.SchemaRequest
 			Computed:    true,
 		},
 	})
+
+	networkSchema.Description = "Manages a libvirt virtual network. A network is defined from the rendered " +
+		"`<network>` XML (virNetworkDefineXML), then started and, optionally, marked to autostart. " +
+		"For NAT and routed networks libvirt programs host firewall rules and runs a dnsmasq instance " +
+		"on the network bridge to provide DHCP and DNS. The schema mirrors the libvirt network XML schema."
+	networkSchema.MarkdownDescription = networkSchema.Description
+
+	resp.Schema = networkSchema
 }
 
 func (r *NetworkResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
